@@ -47,5 +47,52 @@
 
             <a-entity camera></a-entity>
         </a-scene>
+
+        <!-- 📸 Camera Shutter Button -->
+        <button id="shutter-btn" 
+            style="
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background-color: white;
+                color: black;
+                font-size: 18px;
+                border: none;
+                border-radius: 50%;
+                width: 70px;
+                height: 70px;
+                box-shadow: 0px 4px 10px rgba(0,0,0,0.3);
+                cursor: pointer;
+                z-index: 9999;
+            ">
+            📸
+        </button>
+
+        <script>
+            const button = document.getElementById("shutter-btn");
+            button.addEventListener("click", () => {
+                const scene = document.querySelector("a-scene");
+
+                // Ensure the renderer exists
+                if (scene && scene.renderer && scene.renderer.domElement) {
+                    const canvas = scene.renderer.domElement;
+
+                    // Capture the image
+                    const imageData = canvas.toDataURL("image/png");
+
+                    // Create a temporary link to download it
+                    const link = document.createElement("a");
+                    link.href = imageData;
+                    link.download = `AR_Snapshot_${Date.now()}.png`;
+                    link.click();
+
+                    // Optional feedback
+                    alert("📷 Snapshot saved!");
+                } else {
+                    alert("Camera not ready yet!");
+                }
+            });
+        </script>
     </body>
 </html>
