@@ -7,51 +7,32 @@
     <script src="https://raw.githack.com/donmccurdy/aframe-extras/master/dist/aframe-extras.loaders.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-detector.js"></script>
     <script src="https://raw.githack.com/AR-js-org/studio-backend/master/src/modules/marker/tools/gesture-handler.js"></script>
+    <!-- html2canvas for screen capture -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <style>
-      body {
-        margin: 0;
-        overflow: hidden;
-      }
-
-      /* ✅ Responsive camera button */
+      body { margin: 0; overflow: hidden; }
       #shutter-btn {
         position: fixed;
         bottom: 3vh;
         left: 50%;
         transform: translateX(-50%);
-        background-color: rgba(255, 255, 255, 0.9);
-        color: black;
-        font-size: clamp(20px, 5vw, 28px);
-        border: none;
+        background: rgba(255, 255, 255, 0.9);
         border-radius: 50%;
         width: clamp(60px, 14vw, 90px);
         height: clamp(60px, 14vw, 90px);
-        box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.4);
-        cursor: pointer;
-        z-index: 9999;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        user-select: none;
-        touch-action: manipulation;
+        display: flex; align-items: center; justify-content: center;
+        font-size: clamp(22px, 6vw, 30px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        border: none; z-index: 9999;
+        user-select: none; touch-action: manipulation;
       }
-
-      #shutter-btn:active {
-        transform: translateX(-50%) scale(0.95);
-        background-color: rgba(230, 230, 230, 0.9);
-      }
-
-      /* Flash effect */
       #flash {
-        position: fixed;
-        inset: 0;
-        background: white;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.3s ease;
-        z-index: 9998;
+        position: fixed; inset: 0; background:white;
+        opacity:0; pointer-events:none;
+        transition:opacity .25s ease; z-index:9998;
       }
+      #flash.active { opacity:0.8; }
     </style>
   </head>
 
@@ -77,73 +58,42 @@
         raycaster="objects: .clickable"
         emitevents="true"
         cursor="fuse: false; rayOrigin: mouse;"
-        id="markerA"
       >
         <a-entity
-          id="bowser-model"
-          scale="0.7025287485037903 0.7025287485037903 0.7025287485037903"
-          animation-mixer="loop: repeat"
           gltf-model="#animated-asset"
-          class="clickable"
+          scale="0.7 0.7 0.7"
+          animation-mixer="loop: repeat"
           gesture-handler
+          class="clickable"
         ></a-entity>
       </a-marker>
 
       <a-entity camera></a-entity>
     </a-scene>
 
-    <!-- 📸 Camera Button -->
     <button id="shutter-btn">📸</button>
     <div id="flash"></div>
 
     <script>
       const button = document.getElementById("shutter-btn");
-      const flash = document.getElementById("flash");
+      const flash  = document.getElementById("flash");
 
-      button.addEventListener("click", takeSnapshot);
-      button.addEventListener("touchend", takeSnapshot);
+      async function takeScreenshot() {
+        flash.classList.add("active");
+        setTimeout(()=>flash.classList.remove("active"),200);
 
-      function takeSnapshot(event) {
-        event.preventDefault();
+        // Capture the entire body including video + WebGL
+        const canvas = await html2canvas(document.body, {useCORS:true});
+        const imageData = canvas.toDataURL("image/png");
 
-        const scene = document.querySelector("a-scene");
-        const video = document.querySelector("video"); // AR.js camera video feed
-        const rendererCanvas = scene?.renderer?.domElement;
-
-        if (!video || !rendererCanvas) {
-          alert("Camera not ready yet!");
-          return;
-        }
-
-        // Flash effect
-        flash.style.opacity = 0.8;
-        setTimeout(() => (flash.style.opacity = 0), 200);
-
-        // Create a temp canvas matching video size
-        const tempCanvas = document.createElement("canvas");
-        const width = rendererCanvas.width;
-        const height = rendererCanvas.height;
-        tempCanvas.width = width;
-        tempCanvas.height = height;
-        const context = tempCanvas.getContext("2d");
-
-        // Draw video (background)
-        context.drawImage(video, 0, 0, width, height);
-
-        // Draw 3D layer (overlay)
-        context.drawImage(rendererCanvas, 0, 0, width, height);
-
-        // Convert to image
-        const imageData = tempCanvas.toDataURL("image/png");
-
-        // Trigger download
         const link = document.createElement("a");
         link.href = imageData;
         link.download = `AR_Snapshot_${Date.now()}.png`;
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
       }
+
+      button.addEventListener("click", takeScreenshot);
+      button.addEventListener("touchend", e => { e.preventDefault(); takeScreenshot(); });
     </script>
   </body>
 </html>
